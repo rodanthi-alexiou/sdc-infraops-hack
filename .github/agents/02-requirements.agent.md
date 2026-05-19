@@ -182,6 +182,20 @@ Monthly budget (4 options + freeform), Data sensitivity (`multiSelect: true`, 6 
 - **Database-heavy workloads** (Data Analytics, Event-Driven, IoT): add Transactions Per Second question
   (options: <100 TPS, 100-1K TPS, 1K-10K TPS, 10K+ TPS)
 
+**Multi-Tenancy Detection** — ask in Phase 2 (after workload pattern is known):
+
+If the detected workload pattern or user description suggests a SaaS product,
+platform serving multiple customers, or multi-agent system with tenant isolation,
+add 1 question to the Phase 2 `askQuestions` call:
+
+- _"Will this system serve multiple tenants (customers/organizations) from shared infrastructure?"_
+  Options: **Yes** (multi-tenant SaaS, shared infra with tenant isolation),
+  **No** (single-tenant or dedicated per-customer deployments).
+
+Include `multitenancy: true/false` in the output document.
+If not clearly applicable (e.g., internal tool, single-purpose service), default to `false`
+and do NOT ask the question.
+
 **IaC Tool Preference** — ask in Phase 2 (after workload pattern is known):
 
 Use `askQuestions` — 1 question: IaC tool (Bicep recommended, Terraform).

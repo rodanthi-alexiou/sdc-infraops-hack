@@ -13,16 +13,17 @@ Reusable infrastructure patterns for Azure Bicep templates. Complements
 
 ## Quick Reference
 
-| Pattern                  | When to Use                                      | Reference                                                          |
-| ------------------------ | ------------------------------------------------ | ------------------------------------------------------------------ |
-| Hub-Spoke Networking     | Multi-workload environments with shared services | [hub-spoke-pattern](references/hub-spoke-pattern.md)               |
-| Private Endpoint Wiring  | Any PaaS service requiring private connectivity  | [private-endpoint-pattern](references/private-endpoint-pattern.md) |
-| Diagnostic Settings      | Every deployed resource (mandatory)              | [common-patterns](references/common-patterns.md)                   |
-| Conditional Deployment   | Optional resources controlled by parameters      | [common-patterns](references/common-patterns.md)                   |
-| Module Composition       | Breaking main.bicep into reusable modules        | [common-patterns](references/common-patterns.md)                   |
-| Managed Identity Binding | Any service-to-service authentication            | [common-patterns](references/common-patterns.md)                   |
-| Budget & Cost Monitoring | Every deployment (mandatory)                     | [budget-pattern](references/budget-pattern.md)                     |
-| What-If / AVM Pitfalls   | Pre-deployment validation & AVM gotchas          | [avm-pitfalls](references/avm-pitfalls.md)                         |
+| Pattern                    | When to Use                                                     | Reference                                                          |
+| -------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Hub-Spoke Networking       | Multi-workload environments with shared services                | [hub-spoke-pattern](references/hub-spoke-pattern.md)               |
+| Private Endpoint Wiring    | Any PaaS service requiring private connectivity                 | [private-endpoint-pattern](references/private-endpoint-pattern.md) |
+| Diagnostic Settings        | Every deployed resource (mandatory)                             | [common-patterns](references/common-patterns.md)                   |
+| Conditional Deployment     | Optional resources controlled by parameters                     | [common-patterns](references/common-patterns.md)                   |
+| Module Composition         | Breaking main.bicep into reusable modules                       | [common-patterns](references/common-patterns.md)                   |
+| Managed Identity Binding   | Any service-to-service authentication                           | [common-patterns](references/common-patterns.md)                   |
+| Budget & Cost Monitoring   | Every deployment (mandatory)                                    | [budget-pattern](references/budget-pattern.md)                     |
+| What-If / AVM Pitfalls     | Pre-deployment validation & AVM gotchas                         | [avm-pitfalls](references/avm-pitfalls.md)                         |
+| Azure AI Services Patterns | AI workloads: AI Services, AI Search, Cosmos DB, Container Apps | [ai-services-patterns](references/ai-services-patterns.md)         |
 
 ---
 
@@ -73,15 +74,28 @@ Accept `name`, `location`, `tags`, `logAnalyticsWorkspaceName`; output `resource
 
 ---
 
+## Azure AI Services Patterns
+
+- `kind: 'AIServices'` — use `Microsoft.CognitiveServices/accounts` with `kind: AIServices`; never `kind: Hub` (deprecated 2025)
+- **Private endpoints** for AI Services, AI Search, and Cosmos DB are mandatory in production
+- **RBAC over keys** — assign `Cognitive Services OpenAI User` and `Search Index Data Contributor` to the Container Apps managed identity; set `disableLocalAuth: true` on Cosmos DB
+- **AI Search HA** — `replicaCount ≥ 2` required for the 99.9% SLA (WAF Reliability)
+- **DNS zones** — `privatelink.cognitiveservices.azure.com`, `privatelink.search.windows.net`, `privatelink.documents.azure.com`
+
+See [ai-services-patterns](references/ai-services-patterns.md) for full AVM module paths, Bicep examples, and role definition IDs.
+
+---
+
 ## Reference Index
 
-| File                                                                  | Content                                                               |
-| --------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| [hub-spoke-pattern.md](references/hub-spoke-pattern.md)               | Hub-spoke VNet orchestration with peering                             |
-| [private-endpoint-pattern.md](references/private-endpoint-pattern.md) | PE wiring + DNS zone groups + group ID table                          |
-| [common-patterns.md](references/common-patterns.md)                   | Diagnostics, conditional deploy, module composition, managed identity |
-| [budget-pattern.md](references/budget-pattern.md)                     | Consumption budget, forecast alerts, anomaly detection                |
-| [avm-pitfalls.md](references/avm-pitfalls.md)                         | What-if interpretation, AVM gotchas, learn more links                 |
+| File                                                                  | Content                                                                                  |
+| --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| [hub-spoke-pattern.md](references/hub-spoke-pattern.md)               | Hub-spoke VNet orchestration with peering                                                |
+| [private-endpoint-pattern.md](references/private-endpoint-pattern.md) | PE wiring + DNS zone groups + group ID table                                             |
+| [common-patterns.md](references/common-patterns.md)                   | Diagnostics, conditional deploy, module composition, managed identity                    |
+| [budget-pattern.md](references/budget-pattern.md)                     | Consumption budget, forecast alerts, anomaly detection                                   |
+| [avm-pitfalls.md](references/avm-pitfalls.md)                         | What-if interpretation, AVM gotchas, learn more links                                    |
+| [ai-services-patterns.md](references/ai-services-patterns.md)         | AVM modules, RBAC, and private DNS for AI Services, AI Search, Cosmos DB, Container Apps |
 
 ---
 

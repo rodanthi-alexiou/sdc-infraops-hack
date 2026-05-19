@@ -110,7 +110,7 @@ in a single form:
 Run `apex-recall show <project> --json` for full project context. Do not read `00-session-state.json` directly.
 
 - **My step**: 2
-- **Sub-steps**: `phase_1_prereqs` → `phase_2_waf` →
+- **Sub-steps**: `phase_1_prereqs` → `phase_1.5_tenancy` (conditional) → `phase_2_waf` →
   `phase_2.5_compacted` → `phase_3_cost` →
   `phase_4_challenger` → `phase_5_artifact`
 - **Checkpoints**: `apex-recall checkpoint <project> 2 <phase_name> --json`
@@ -132,6 +132,16 @@ Run `apex-recall show <project> --json` for full project context. Do not read `0
 4. **Read** `.github/skills/context-shredding/SKILL.digest.md` — runtime compression tiers for loading large artifacts
 
 These skills are your single source of truth. Do NOT use hardcoded values.
+
+### Conditional Skill: Multi-Tenancy
+
+If `01-requirements.md` contains `multitenancy: true` OR mentions multi-tenant,
+SaaS, tenant isolation, or shared infrastructure for multiple customers:
+
+5. **Read** `.github/skills/azure-multitenant-architect/SKILL.md` — tenancy models,
+   WAF checklist, AI patterns, search isolation patterns
+
+Then insert **Phase 1.5: Tenancy Model Selection** (below) before the WAF assessment.
 
 ## DO / DON'T
 
@@ -161,6 +171,27 @@ These skills are your single source of truth. Do NOT use hardcoded values.
 - Do not claim zone redundancy without SKU verification (e.g., APIM Standard v2 does NOT support AZ)
 - Do not skip memory reservation in capacity sizing — Azure Managed Redis reserves ~20%
 - RPS calculation: `monthly_txn / (days × hours × 3600)`. Apply 3-5× concentration for peaks
+
+## Phase 1.5: Tenancy Model Selection (Conditional — Multi-Tenant Only)
+
+Skip this phase entirely if `multitenancy: true` is NOT present in `01-requirements.md`.
+
+Use `askQuestions` to present the 4 tenancy models from the multitenant skill's
+`references/multitenant-decision-tree.md` and gather the user's choice:
+
+- **Model A: Fully Shared** — single deployment, all tenants share compute + data (lowest cost)
+- **Model B: Shared Compute, Dedicated Data** — shared app tier, per-tenant databases (balanced)
+- **Model C: Fully Dedicated** — separate deployment per tenant (maximum isolation)
+- **Model D: Hybrid Tiered** — tier-based: free/standard = shared, premium = dedicated
+
+Record the decision:
+`apex-recall decide <project> --decision "Tenancy model: <A|B|C|D>" --rationale "<why>" --step 2 --json`
+
+The selected model informs WAF scoring (reference `multitenant-waf-checklist.md`),
+resource topology, and cost estimation. Carry the tenancy model through all
+subsequent phases.
+
+**Checkpoint**: `apex-recall checkpoint <project> 2 phase_1.5_tenancy --json`
 
 ## Core Workflow
 
@@ -199,7 +230,7 @@ in your WAF assessment recommendations (still produce the identical artifact str
    - Do NOT re-read `01-requirements.md` or doc search results — rely on the
      summary and the saved `02-waf-research.tmp.md` on disk
    - Update session state: `sub_step: "phase_2.5_compacted"`
-   **Checkpoint** (MANDATORY): `apex-recall checkpoint <project> 2 phase_2.5_compacted --json`
+     **Checkpoint** (MANDATORY): `apex-recall checkpoint <project> 2 phase_2.5_compacted --json`
 7. **Delegate pricing** — Send resource list to `cost-estimate-subagent`; receive verified prices
 8. **Generate assessment** — Save `02-architecture-assessment.md` with subagent-sourced prices
    **Decisions** (MANDATORY): Record key architecture choices:

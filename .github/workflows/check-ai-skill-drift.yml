@@ -1,0 +1,66 @@
+name: Check AI Skill Source Drift
+
+on:
+  schedule:
+    # Monday 08:00 UTC — staggered from the weekly-upstream-sync (Sunday 23:17 UTC)
+    - cron: "0 8 * * 1"
+  workflow_dispatch:
+
+jobs:
+  check-drift:
+    name: Check upstream AI skill sources
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Check for upstream drift
+        id: drift
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if node tools/scripts/check-skill-source-drift.mjs --fail-on-drift; then
+            echo "drift=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "drift=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open issue if drift detected
+        if: steps.drift.outputs.drift == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue create \
+            --title "AI Skill Sources Drift Detected — Review azure-ai-architect references" \
+            --body "$(cat <<'BODY'
+          Upstream sources for the **azure-ai-architect** skill have changed. Please review and update the affected reference files.
+
+          **Affected skill:** \`.github/skills/azure-ai-architect/\`
+
+          **Sources tracked:** \`tools/registry/ai-skill-sources.json\`
+
+          **What to do:**
+
+          1. Run locally to see which sources changed:
+             \`\`\`
+             node tools/scripts/check-skill-source-drift.mjs
+             \`\`\`
+          2. Review the linked commits in the output for relevant content changes.
+          3. Update the affected reference files in \`.github/skills/azure-ai-architect/references/\`.
+          4. Record the new baseline:
+             \`\`\`
+             node tools/scripts/check-skill-source-drift.mjs --update-baseline
+             \`\`\`
+          5. Commit the updated reference files and the updated \`ai-skill-sources.json\`.
+          BODY
+          )" \
+            --label "documentation,maintenance"
