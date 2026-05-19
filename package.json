@@ -76,7 +76,8 @@
     "validate:_node-ci": "run-p validate:artifacts validate:agents validate:skills lint:version-sync lint:deprecated-refs lint:mcp-config lint:governance-refs validate:instruction-checks validate:session-state validate:session-lock validate:workflow-graph lint:workflow-table-sync validate:agent-registry lint:registry-coverage validate:skill-checks lint:json lint:json-schemas lint:glob-audit lint:orphaned-content validate:vscode lint:drawio lint:model-floors validate:explorer-graph",
     "validate:_external": "run-p lint:md lint:python lint:terraform-fmt validate:terraform test:apex-recall",
     "validate:all": "run-p --continue-on-error validate:_node validate:_external && echo '✅ All validations passed'",
-    "audit:quarterly": "run-p lint:glob-audit lint:orphaned-content lint:docs-freshness"
+    "audit:quarterly": "run-p lint:glob-audit lint:orphaned-content lint:docs-freshness",
+    "check:skill-drift": "node tools/scripts/check-skill-source-drift.mjs"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.5.0",

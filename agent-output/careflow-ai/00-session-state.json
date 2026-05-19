@@ -1,0 +1,186 @@
+{
+  "schema_version": "3.0",
+  "project": "careflow-ai",
+  "iac_tool": "",
+  "region": "swedencentral",
+  "branch": "main",
+  "updated": "2026-05-19T20:42:44Z",
+  "current_step": 0,
+  "decisions": {
+    "region": "swedencentral",
+    "compliance": "GDPR, NEN 7510, ISO 27001",
+    "budget": "2000-5000 EUR/month",
+    "architecture_pattern": "",
+    "deployment_strategy": "phased-standard",
+    "complexity": "",
+    "iac_tool": "Bicep"
+  },
+  "open_findings": [
+    "CRITICAL: Block Azure OpenAI Provisioned Capacity — OpenAI deployments must use Standard (PAYG) SKU, not PTU/ProvisionedManaged",
+    "RISK: Block Azure Sentinel Commitment over 100 — Log Analytics capacityReservationLevel must not exceed 100; recommend PerGB2018 SKU"
+  ],
+  "decision_log": [
+    {
+      "decision": "4 shared agent types instead of 200 instances",
+      "timestamp": "2026-05-19T14:13:44Z",
+      "rationale": "Efficient multi-tenancy via hospital_id context; 50-75 concurrent executions sufficient",
+      "step": "2"
+    },
+    {
+      "decision": "Cosmos DB Autoscale with Continuous Backup",
+      "timestamp": "2026-05-19T14:13:44Z",
+      "rationale": "RPO=1h requires PITR; Serverless only offers 4h periodic backup",
+      "step": "2"
+    },
+    {
+      "decision": "Ingestion Proxy for PHI validation",
+      "timestamp": "2026-05-19T14:13:45Z",
+      "rationale": "GDPR Art.5(1)(f) - raw PHI must never enter Event Hubs immutable streams",
+      "step": "2"
+    },
+    {
+      "decision": "Architecture diagram generated in Draw.io format with 19 Azure icons and 11 flow edges",
+      "timestamp": "2026-05-19T18:30:36Z",
+      "rationale": "Transactional MCP workflow: 4 zone groups, Hospital external vertex, 8 cross-cutting services",
+      "step": "3"
+    },
+    {
+      "decision": "Deployment strategy: phased",
+      "timestamp": "2026-05-19T20:29:24Z",
+      "rationale": "20 resources with production security/compliance needs (NEN 7510, GDPR, 6 private endpoints)",
+      "step": "4"
+    }
+  ],
+  "review_audit": {
+    "step_1": {
+      "complexity": "",
+      "passes_planned": 0,
+      "passes_executed": 0,
+      "skipped": [],
+      "skip_reasons": [],
+      "models_used": []
+    },
+    "step_2": {
+      "complexity": "",
+      "passes_planned": 0,
+      "passes_executed": 0,
+      "skipped": [],
+      "skip_reasons": [],
+      "models_used": []
+    },
+    "step_3_5": {
+      "complexity": "",
+      "passes_planned": 0,
+      "passes_executed": 1,
+      "skipped": [],
+      "skip_reasons": [],
+      "models_used": []
+    },
+    "step_4": {
+      "complexity": "",
+      "passes_planned": 0,
+      "passes_executed": 2,
+      "skipped": [],
+      "skip_reasons": [],
+      "models_used": []
+    },
+    "step_5": {
+      "complexity": "",
+      "passes_planned": 0,
+      "passes_executed": 0,
+      "skipped": [],
+      "skip_reasons": [],
+      "models_used": []
+    },
+    "step_6": {
+      "complexity": "",
+      "passes_planned": 0,
+      "passes_executed": 0,
+      "skipped": [],
+      "skip_reasons": [],
+      "models_used": []
+    }
+  },
+  "steps": {
+    "1": {
+      "name": "Requirements",
+      "agent": "02-Requirements",
+      "status": "pending",
+      "sub_step": "phase_5_artifact",
+      "started": null,
+      "completed": null,
+      "artifacts": [],
+      "context_files_used": []
+    },
+    "2": {
+      "name": "Architecture",
+      "agent": "03-Architect",
+      "status": "complete",
+      "sub_step": null,
+      "started": null,
+      "completed": "2026-05-19T14:16:24Z",
+      "artifacts": [],
+      "context_files_used": []
+    },
+    "3": {
+      "name": "Design",
+      "agent": "04-Design",
+      "status": "complete",
+      "sub_step": null,
+      "started": null,
+      "completed": "2026-05-19T18:30:37Z",
+      "artifacts": [],
+      "context_files_used": []
+    },
+    "3_5": {
+      "name": "Governance",
+      "agent": "04g-Governance",
+      "status": "complete",
+      "sub_step": null,
+      "started": null,
+      "completed": "2026-05-19T19:34:02Z",
+      "artifacts": [],
+      "context_files_used": []
+    },
+    "4": {
+      "name": "IaC Plan",
+      "agent": "",
+      "status": "pending",
+      "sub_step": "phase_3.5_strategy",
+      "started": null,
+      "completed": null,
+      "artifacts": [],
+      "context_files_used": []
+    },
+    "5": {
+      "name": "IaC Code",
+      "agent": "",
+      "status": "pending",
+      "sub_step": null,
+      "started": null,
+      "completed": null,
+      "artifacts": [],
+      "context_files_used": []
+    },
+    "6": {
+      "name": "Deploy",
+      "agent": "",
+      "status": "pending",
+      "sub_step": null,
+      "started": null,
+      "completed": null,
+      "artifacts": [],
+      "context_files_used": []
+    },
+    "7": {
+      "name": "As-Built",
+      "agent": "08-As-Built",
+      "status": "pending",
+      "sub_step": null,
+      "started": null,
+      "completed": null,
+      "artifacts": [],
+      "context_files_used": []
+    }
+  }
+}

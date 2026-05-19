@@ -17,6 +17,32 @@
 [![Copilot](https://img.shields.io/badge/GitHub_Copilot-000000?logo=github-copilot&logoColor=white)](https://github.com/features/copilot)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+## About This Repository
+
+This repository is a **spinoff** of the
+[APEX — Agentic Platform Engineering eXperience](https://github.com/jonathan-vella/azure-agentic-infraops)
+project created by [Jonathan Vella](https://github.com/jonathan-vella).
+
+It was forked to serve as the working environment for a **CareFlow AI** healthcare platform engineering
+scenario — designing and deploying the Azure infrastructure that enables AI agents to operate at scale
+for hospital operational intelligence.
+
+### Changes from Upstream
+
+The following customizations were applied on top of the base APEX accelerator:
+
+| Change                                                   | Why                                                                                                                                               |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| New `azure-ai-architect` skill                           | Provides AI workload architecture guidance (PTU vs PAYG, RAG accuracy NFRs, content safety, private endpoints) needed by the CareFlow AI scenario |
+| New `azure-multitenant-architect` skill                  | Covers tenant isolation models and per-tenant cost attribution for the multi-hospital SaaS architecture                                           |
+| AI services AVM patterns added to `azure-bicep-patterns` | Ensures the Bicep CodeGen agent uses correct AVM modules for AI Services, AI Search, and Cosmos DB instead of hallucinating paths                 |
+| FAOS optimize sub-skill in `microsoft-foundry`           | Enables eval-driven agent tuning (temperature sweeps, A/B comparisons) required for the RAG accuracy reliability NFR                              |
+| Updated `02-requirements` and `03-architect` agents      | Enhanced to handle AI-specific workload requirements and WAF assessment of AI scenarios                                                           |
+| `check-ai-skill-drift` GitHub Actions workflow           | Detects when upstream AI-related skills diverge from local customizations                                                                         |
+| Hub deprecation warnings in Foundry skill                | Prevents use of deprecated `kind: Hub` resources — redirects to `kind: AIServices`                                                                |
+
+---
+
 ## Overview
 
 This accelerator provides the scaffolding and governance to move from requirements to deployed infrastructure
@@ -88,7 +114,7 @@ npm run sync:workflows
 | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `npm install`            | Install Node.js dependencies (validation scripts, linting)                                                                                                                                    |
 | `npm run init`           | **One-time setup** — replaces all references to the accelerator template repo with your repo's URL (auto-detected from git remote). Run `npm run init -- --dry-run` first to preview changes. |
-| `npm run sync:workflows` | Fetches the latest GitHub Actions workflows from the [upstream APEX project](https://github.com/jonathan-vella/azure-agentic-infraops) into your `.github/workflows/` directory                |
+| `npm run sync:workflows` | Fetches the latest GitHub Actions workflows from the [upstream APEX project](https://github.com/jonathan-vella/azure-agentic-infraops) into your `.github/workflows/` directory               |
 
 > **Note:** Python dependencies (diagrams, Azure Pricing MCP server, apex-recall) are installed
 > automatically by the dev container's `post-create.sh` script. No manual `pip install` is needed.
