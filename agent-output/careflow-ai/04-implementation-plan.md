@@ -43,37 +43,37 @@ Implementation plan for CareFlow AI — an event-driven AI agent platform servin
 
 **Governance constraints applied:**
 
-| #   | Policy                                   | Effect | Resolution                                            |
-| --- | ---------------------------------------- | ------ | ----------------------------------------------------- |
-| 1   | Block Azure OpenAI Provisioned Capacity  | Deny   | Use `sku.name: 'Standard'` (PAYG) for all deployments |
-| 2   | Block Azure Sentinel Commitment over 100 | Deny   | Use `sku.name: 'PerGB2018'` (no capacity reservation) |
+| #   | Policy                                   | Effect | Resolution                                                                                                            |
+| --- | ---------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------- |
+| 1   | Block Azure OpenAI Provisioned Capacity  | Deny   | Use `sku.name: 'DataZoneStandard'` (PAYG, EU Zone) — `GlobalStandard` excluded: GDPR Art.44 / NEN 7510 data residency |
+| 2   | Block Azure Sentinel Commitment over 100 | Deny   | Use `sku.name: 'PerGB2018'` (no capacity reservation)                                                                 |
 
 ---
 
 ## 📦 Resource Inventory
 
-| Resource               | Type                                         | SKU                     | AVM Module   | Version | Dependencies                 | Status  |
-| ---------------------- | -------------------------------------------- | ----------------------- | ------------ | ------- | ---------------------------- | ------- |
-| Resource Group         | Microsoft.Resources/resourceGroups           | —                       | N/A (scope)  | —       | None                         | ⬜ Todo |
-| Virtual Network        | Microsoft.Network/virtualNetworks            | —                       | ✅ AVM       | 0.9.0   | Resource Group               | ⬜ Todo |
-| Log Analytics          | Microsoft.OperationalInsights/workspaces     | **PerGB2018**           | ✅ AVM       | 0.15.1  | Resource Group               | ⬜ Todo |
-| Key Vault              | Microsoft.KeyVault/vaults                    | Premium                 | ✅ AVM       | 0.13.3  | VNet, Private DNS            | ⬜ Todo |
-| Storage Account        | Microsoft.Storage/storageAccounts            | Standard ZRS            | ✅ AVM       | 0.32.0  | VNet, Private DNS            | ⬜ Todo |
-| Event Hubs             | Microsoft.EventHub/namespaces                | Standard 2TU            | ✅ AVM       | 0.14.2  | VNet, Private DNS            | ⬜ Todo |
-| Service Bus            | Microsoft.ServiceBus/namespaces              | Standard                | ✅ AVM       | 0.16.2  | VNet, Private DNS            | ⬜ Todo |
-| Cosmos DB              | Microsoft.DocumentDB/databaseAccounts        | Autoscale 400-4000 RU/s | ✅ AVM       | 0.19.0  | VNet, Private DNS, Key Vault | ⬜ Todo |
-| Azure OpenAI           | Microsoft.CognitiveServices/accounts         | **Standard (PAYG)**     | ✅ AVM       | 0.14.2  | VNet, Key Vault              | ⬜ Todo |
-| AI Foundry             | Microsoft.MachineLearningServices/workspaces | Standard                | ✅ AVM (ptn) | 0.7.0   | OpenAI, Storage, Key Vault   | ⬜ Todo |
-| ACR                    | Microsoft.ContainerRegistry/registries       | Premium                 | ✅ AVM       | 0.12.1  | VNet, Private DNS            | ⬜ Todo |
-| Container Apps Env     | Microsoft.App/managedEnvironments            | Consumption             | ✅ AVM       | 0.13.3  | VNet, Log Analytics          | ⬜ Todo |
-| Container App (Agents) | Microsoft.App/containerApps                  | Consumption             | ✅ AVM       | 0.22.1  | CA Env, ACR, Cosmos, OpenAI  | ⬜ Todo |
-| Container App (Proxy)  | Microsoft.App/containerApps                  | Consumption             | ✅ AVM       | 0.22.1  | CA Env, ACR, Event Hubs      | ⬜ Todo |
-| Data Factory           | Microsoft.DataFactory/factories              | V2                      | ✅ AVM       | 0.11.3  | VNet, Storage, Cosmos DB     | ⬜ Todo |
-| API Management         | Microsoft.ApiManagement/service              | Standard v2             | ✅ AVM       | 0.14.1  | VNet, Key Vault              | ⬜ Todo |
-| Front Door + WAF       | Microsoft.Cdn/profiles                       | Standard                | ✅ AVM       | 0.19.3  | APIM                         | ⬜ Todo |
-| App Insights           | Microsoft.Insights/components                | Workspace-based         | ✅ AVM       | 0.7.1   | Log Analytics                | ⬜ Todo |
-| Private DNS Zones (6)  | Microsoft.Network/privateDnsZones            | —                       | ✅ AVM       | 0.8.1   | VNet                         | ⬜ Todo |
-| Budget                 | Microsoft.Consumption/budgets                | —                       | ✅ AVM       | 0.1.0   | Resource Group               | ⬜ Todo |
+| Resource                           | Type                                         | SKU                                  | AVM Module   | Version | Dependencies                     | Status  |
+| ---------------------------------- | -------------------------------------------- | ------------------------------------ | ------------ | ------- | -------------------------------- | ------- |
+| Resource Group                     | Microsoft.Resources/resourceGroups           | —                                    | N/A (scope)  | —       | None                             | ⬜ Todo |
+| Virtual Network                    | Microsoft.Network/virtualNetworks            | —                                    | ✅ AVM       | 0.9.0   | Resource Group                   | ⬜ Todo |
+| Log Analytics                      | Microsoft.OperationalInsights/workspaces     | **PerGB2018**                        | ✅ AVM       | 0.15.1  | Resource Group                   | ⬜ Todo |
+| Key Vault                          | Microsoft.KeyVault/vaults                    | Premium                              | ✅ AVM       | 0.13.3  | VNet, Private DNS                | ⬜ Todo |
+| Storage Account                    | Microsoft.Storage/storageAccounts            | Standard ZRS                         | ✅ AVM       | 0.32.0  | VNet, Private DNS                | ⬜ Todo |
+| Event Hubs                         | Microsoft.EventHub/namespaces                | Standard 2TU                         | ✅ AVM       | 0.14.2  | VNet, Private DNS                | ⬜ Todo |
+| Service Bus                        | Microsoft.ServiceBus/namespaces              | Standard                             | ✅ AVM       | 0.16.2  | VNet, Private DNS                | ⬜ Todo |
+| Cosmos DB                          | Microsoft.DocumentDB/databaseAccounts        | Autoscale 400-4000 RU/s              | ✅ AVM       | 0.19.0  | VNet, Private DNS, Key Vault     | ⬜ Todo |
+| AI Services (kind: AIServices)     | Microsoft.CognitiveServices/accounts         | **DataZoneStandard (PAYG, EU Zone)** | ✅ AVM       | 0.14.2  | VNet, Key Vault                  | ⬜ Todo |
+| AI Foundry Project (kind: Project) | Microsoft.MachineLearningServices/workspaces | Standard                             | ✅ AVM (ptn) | 0.7.0   | AI Services, Storage, Key Vault  | ⬜ Todo |
+| ACR                                | Microsoft.ContainerRegistry/registries       | Premium                              | ✅ AVM       | 0.12.1  | VNet, Private DNS                | ⬜ Todo |
+| Container Apps Env                 | Microsoft.App/managedEnvironments            | Consumption                          | ✅ AVM       | 0.13.3  | VNet, Log Analytics              | ⬜ Todo |
+| Container App (Agents)             | Microsoft.App/containerApps                  | Consumption                          | ✅ AVM       | 0.22.1  | CA Env, ACR, Cosmos, AI Services | ⬜ Todo |
+| Container App (Proxy)              | Microsoft.App/containerApps                  | Consumption                          | ✅ AVM       | 0.22.1  | CA Env, ACR, Event Hubs          | ⬜ Todo |
+| Data Factory                       | Microsoft.DataFactory/factories              | V2                                   | ✅ AVM       | 0.11.3  | VNet, Storage, Cosmos DB         | ⬜ Todo |
+| API Management                     | Microsoft.ApiManagement/service              | Standard v2                          | ✅ AVM       | 0.14.1  | VNet, Key Vault                  | ⬜ Todo |
+| Front Door + WAF                   | Microsoft.Cdn/profiles                       | Standard                             | ✅ AVM       | 0.19.3  | APIM                             | ⬜ Todo |
+| App Insights                       | Microsoft.Insights/components                | Workspace-based                      | ✅ AVM       | 0.7.1   | Log Analytics                    | ⬜ Todo |
+| Private DNS Zones (6)              | Microsoft.Network/privateDnsZones            | —                                    | ✅ AVM       | 0.8.1   | VNet                             | ⬜ Todo |
+| Budget                             | Microsoft.Consumption/budgets                | —                                    | ✅ AVM       | 0.1.0   | Resource Group                   | ⬜ Todo |
 
 **AVM Coverage**: 18/18 resources use AVM modules (100%)
 
@@ -93,7 +93,7 @@ infra/bicep/careflow-ai/
 │   ├── storage.bicep             # Storage Account (ZRS)
 │   ├── messaging.bicep           # Event Hubs + Service Bus
 │   ├── data.bicep                # Cosmos DB (Autoscale)
-│   ├── ai.bicep                  # Azure OpenAI + AI Foundry
+│   ├── ai.bicep                  # AI Services (kind: AIServices) + AI Foundry Project
 │   ├── compute.bicep             # Container Apps Env + Apps (agents + proxy)
 │   ├── container-registry.bicep  # ACR Premium
 │   ├── api.bicep                 # APIM + Front Door + WAF
@@ -103,21 +103,21 @@ infra/bicep/careflow-ai/
 └── README.md                     # Module documentation
 ```
 
-| Module                   | AVM Source                                         | Version | Purpose                                  |
-| ------------------------ | -------------------------------------------------- | ------- | ---------------------------------------- |
-| networking.bicep         | `br/public:avm/res/network/virtual-network`        | 0.9.0   | VNet with 5 subnets                      |
-| dns-zones.bicep          | `br/public:avm/res/network/private-dns-zone`       | 0.8.1   | 6 Private DNS zones                      |
-| monitoring.bicep         | `br/public:avm/res/operational-insights/workspace` | 0.15.1  | Log Analytics (PerGB2018) + App Insights |
-| security.bicep           | `br/public:avm/res/key-vault/vault`                | 0.13.3  | Key Vault Premium + private endpoint     |
-| storage.bicep            | `br/public:avm/res/storage/storage-account`        | 0.32.0  | Storage ZRS + private endpoint           |
-| messaging.bicep          | `br/public:avm/res/event-hub/namespace`            | 0.14.2  | Event Hubs + Service Bus + PEs           |
-| data.bicep               | `br/public:avm/res/document-db/database-account`   | 0.19.0  | Cosmos DB Autoscale + PE                 |
-| ai.bicep                 | `br/public:avm/res/cognitive-services/account`     | 0.14.2  | Azure OpenAI (Standard PAYG)             |
-| compute.bicep            | `br/public:avm/res/app/managed-environment`        | 0.13.3  | Container Apps Env + 2 apps              |
-| container-registry.bicep | `br/public:avm/res/container-registry/registry`    | 0.12.1  | ACR Premium + PE                         |
-| api.bicep                | `br/public:avm/res/api-management/service`         | 0.14.1  | APIM Standard v2 + Front Door            |
-| data-factory.bicep       | `br/public:avm/res/data-factory/factory`           | 0.11.3  | Data Factory V2                          |
-| budget.bicep             | `br/public:avm/res/consumption/budget/rg-scope`    | 0.1.0   | Budget with forecast alerts              |
+| Module                   | AVM Source                                         | Version | Purpose                                                       |
+| ------------------------ | -------------------------------------------------- | ------- | ------------------------------------------------------------- |
+| networking.bicep         | `br/public:avm/res/network/virtual-network`        | 0.9.0   | VNet with 5 subnets                                           |
+| dns-zones.bicep          | `br/public:avm/res/network/private-dns-zone`       | 0.8.1   | 6 Private DNS zones                                           |
+| monitoring.bicep         | `br/public:avm/res/operational-insights/workspace` | 0.15.1  | Log Analytics (PerGB2018) + App Insights                      |
+| security.bicep           | `br/public:avm/res/key-vault/vault`                | 0.13.3  | Key Vault Premium + private endpoint                          |
+| storage.bicep            | `br/public:avm/res/storage/storage-account`        | 0.32.0  | Storage ZRS + private endpoint                                |
+| messaging.bicep          | `br/public:avm/res/event-hub/namespace`            | 0.14.2  | Event Hubs + Service Bus + PEs                                |
+| data.bicep               | `br/public:avm/res/document-db/database-account`   | 0.19.0  | Cosmos DB Autoscale + PE                                      |
+| ai.bicep                 | `br/public:avm/res/cognitive-services/account`     | 0.14.2  | AI Services (kind: AIServices, DataZoneStandard PAYG EU-Zone) |
+| compute.bicep            | `br/public:avm/res/app/managed-environment`        | 0.13.3  | Container Apps Env + 2 apps                                   |
+| container-registry.bicep | `br/public:avm/res/container-registry/registry`    | 0.12.1  | ACR Premium + PE                                              |
+| api.bicep                | `br/public:avm/res/api-management/service`         | 0.14.1  | APIM Standard v2 + Front Door                                 |
+| data-factory.bicep       | `br/public:avm/res/data-factory/factory`           | 0.11.3  | Data Factory V2                                               |
+| budget.bicep             | `br/public:avm/res/consumption/budget/rg-scope`    | 0.1.0   | Budget with forecast alerts                                   |
 
 ---
 
@@ -278,38 +278,79 @@ retentionInDays: 365
 
 **Resources**:
 
-- Azure OpenAI Account (`oai-careflow-ai-{env}`)
+- Azure AI Services Account (`aisa-careflow-ai-{env}`) — `kind: AIServices`
   - Public network access: disabled
-  - Managed Identity authentication
+  - Managed Identity authentication (system-assigned)
+  - `disableLocalAuth: true` (Entra ID only — Security gate)
   - Private endpoint (cognitiveservices)
+  - Content Safety filters: enabled on all deployments (healthcare — regulated)
+  - Defender for AI: enabled (Microsoft Cloud Security Benchmark)
+  - Diagnostic settings: forwarded to Log Analytics workspace
   - Deployments:
-    - `gpt-4o` — **SKU: `Standard`** ⚠️ Governance Constraint #1
-    - `gpt-4o-mini` — **SKU: `Standard`** ⚠️ Governance Constraint #1
+    - `gpt-4o` — **SKU: `DataZoneStandard`** ⚠️ Governance Constraints #1 + #3
+    - `gpt-4o-mini` — **SKU: `DataZoneStandard`** ⚠️ Governance Constraints #1 + #3
+
+  > **Data residency note**: `GlobalStandard` routes requests globally and cannot guarantee EU/EEA processing. Dutch hospitals under GDPR Art.44 and NEN 7510 require data to remain in the EU data zone → `DataZoneStandard` (Europe zone). `Standard` (region-pinned to swedencentral) is the fallback if DataZone quota is unavailable, at the cost of lower TPM.
 
 **Key Configuration**:
 
 ```bicep
-// GOVERNANCE CONSTRAINT #1: Standard PAYG required (PTU/Provisioned blocked)
+// GOVERNANCE CONSTRAINTS #1 + #3: DataZoneStandard PAYG required
+// #1: PTU/Provisioned blocked by Azure Policy
+// #3: GlobalStandard excluded — GDPR Art.44 / NEN 7510 EU data residency (Dutch hospitals)
+resource aiServices 'Microsoft.CognitiveServices/accounts' = {
+  kind: 'AIServices'              // NOT 'OpenAI' — current resource model (2026)
+  properties: {
+    publicNetworkAccess: 'Disabled'
+    disableLocalAuth: true         // Security gate: Entra ID / MI only
+  }
+}
+
 deployments: [
   {
     name: 'gpt-4o'
     model: { format: 'OpenAI', name: 'gpt-4o', version: '2024-11-20' }
-    sku: { name: 'Standard', capacity: 30 }  // 30K TPM
+    sku: { name: 'DataZoneStandard', capacity: 30 }  // 30K TPM (PAYG, EU Zone)
   }
   {
     name: 'gpt-4o-mini'
     model: { format: 'OpenAI', name: 'gpt-4o-mini', version: '2024-07-18' }
-    sku: { name: 'Standard', capacity: 60 }  // 60K TPM
+    sku: { name: 'DataZoneStandard', capacity: 60 }  // 60K TPM (PAYG, EU Zone)
   }
 ]
+
+// Content Safety — required for healthcare/regulated workloads
+contentSafetyPolicy: {
+  enabled: true
+  categories: ['Hate', 'Sexual', 'Violence', 'SelfHarm']
+  severityThreshold: 'Medium'     // block Medium+ severity
+}
+
+// Diagnostic settings — AI-specific telemetry
+diagnosticSettings: [{
+  workspaceResourceId: logAnalyticsWorkspaceId
+  logs: [
+    { category: 'RequestResponse', enabled: true }
+    { category: 'Audit', enabled: true }
+  ]
+  metrics: [{ category: 'AllMetrics', enabled: true }]
+}]
 ```
 
-- AI Foundry Project (`aifp-careflow-ai-{env}`)
-  - Connected to: OpenAI, Storage, Key Vault
+**RBAC Role Assignments** (Managed Identity → AI Services):
+
+| Principal                 | Role                                  | Role ID                                | Purpose             |
+| ------------------------- | ------------------------------------- | -------------------------------------- | ------------------- |
+| Container App (Agents) MI | Cognitive Services OpenAI User        | `5e0bd9bd-7b93-4f28-af87-19fc36ad61bd` | Inference calls     |
+| Container App (Proxy) MI  | Cognitive Services OpenAI User        | `5e0bd9bd-7b93-4f28-af87-19fc36ad61bd` | Inference calls     |
+| Foundry Project MI        | Cognitive Services OpenAI Contributor | `a001fd3d-188f-4b5d-821b-7da978bf7442` | Agent orchestration |
+
+- AI Foundry Project (`fdry-careflow-ai-{env}`) — `kind: Project`
+  - Connected to: AI Services account (not separate OpenAI), Storage, Key Vault
   - Private endpoint (`privatelink.api.azureml.ms`)
   - Agent definitions: Triage, Clinical Ops, Scheduling, Reporting
 
-**Outputs**: `openAiEndpoint`, `aiFoundryProjectId`
+**Outputs**: `aiServicesEndpoint`, `aiFoundryProjectId`
 
 ### Task 10: modules/container-registry.bicep
 
@@ -362,11 +403,16 @@ deployments: [
 
 **Resources**:
 
-- API Management (`apim-careflow-ai-{env}`)
+- API Management (`apim-careflow-ai-{env}`) — **AI Gateway role**
   - Standard v2, VNet integrated
   - System-assigned managed identity
-  - Per-hospital subscription products
+  - Per-hospital subscription products (cost attribution per tenant)
   - OAuth 2.0 validation policy
+  - **AI Gateway policies** (Citadel L1 runtime):
+    - `azure-openai-token-limit`: TPM quota per hospital subscription
+    - Circuit breaker on AI backend (fail-fast on 429/503)
+    - Semantic caching (Azure Managed Redis — optional for PoC)
+    - Content safety pre-check policy (PII detection before model)
 - Front Door Profile + WAF Policy (`afd-careflow-ai-{env}`)
   - Standard tier
   - WAF: Detection mode (switch to Prevention after tuning)
@@ -423,11 +469,11 @@ notifications: {
 
 ### Phase 3: Data & Messaging
 
-| Order | Module          | Resources                                 | Validation                          |
-| ----- | --------------- | ----------------------------------------- | ----------------------------------- |
-| 6     | messaging.bicep | Event Hubs + Service Bus + PEs            | Verify namespace connectivity       |
-| 7     | data.bicep      | Cosmos DB (Autoscale) + PE                | Verify database creation, backup    |
-| 8     | ai.bicep        | Azure OpenAI (Standard PAYG) + AI Foundry | Verify deployments active (non-PTU) |
+| Order | Module          | Resources                                                | Validation                                        |
+| ----- | --------------- | -------------------------------------------------------- | ------------------------------------------------- |
+| 6     | messaging.bicep | Event Hubs + Service Bus + PEs                           | Verify namespace connectivity                     |
+| 7     | data.bicep      | Cosmos DB (Autoscale) + PE                               | Verify database creation, backup                  |
+| 8     | ai.bicep        | AI Services (DataZoneStandard PAYG EU-Zone) + AI Foundry | Verify deployments active (non-PTU, EU-zone only) |
 
 **Approval Gate**: Verify data stores and AI models are accessible before compute deployment.
 
@@ -494,8 +540,8 @@ Source: [04-runtime-diagram.py](./04-runtime-diagram.py) (Python `diagrams` libr
 | Event Hubs         | `evhns-{project}-{env}`        | `evhns-careflow-ai-dev`     | `evhns-careflow-ai-dev`      |
 | Service Bus        | `sbns-{project}-{env}`         | `sbns-careflow-ai-dev`      | `sbns-careflow-ai-dev`       |
 | Cosmos DB          | `cosmos-{project}-{env}`       | `cosmos-careflow-ai-dev`    | `cosmos-careflow-ai-dev`     |
-| Azure OpenAI       | `oai-{project}-{env}`          | `oai-careflow-ai-dev`       | `oai-careflow-ai-dev`        |
-| AI Foundry         | `aif-{project}-{env}`          | `aif-careflow-ai-dev`       | `aif-careflow-ai-dev`        |
+| AI Services        | `aisa-{project}-{env}`         | `aisa-careflow-ai-dev`      | `aisa-careflow-ai-dev`       |
+| AI Foundry Project | `fdry-{project}-{env}`         | `fdry-careflow-ai-dev`      | `fdry-careflow-ai-dev`       |
 | ACR                | `acr{short}{env}{suffix}`      | `acrcfaidevqrs56`           | `acrcfai{env}{uniqueSuffix}` |
 | Container Apps Env | `cae-{project}-{env}`          | `cae-careflow-ai-dev`       | `cae-careflow-ai-dev`        |
 | Container App      | `ca-{purpose}-{project}-{env}` | `ca-agents-careflow-ai-dev` | `ca-agents-careflow-ai-dev`  |
@@ -509,30 +555,36 @@ Source: [04-runtime-diagram.py](./04-runtime-diagram.py) (Python `diagrams` libr
 
 ## 🔐 Security Configuration
 
-| Resource          | Security Setting   | Value                                           |
-| ----------------- | ------------------ | ----------------------------------------------- |
-| All services      | TLS version        | `TLS1_2` minimum                                |
-| All services      | Tags               | `Environment`, `ManagedBy`, `Project`, `Owner`  |
-| Storage Account   | Public blob access | `false`                                         |
-| Storage Account   | Shared key access  | `false` (Entra ID only)                         |
-| Storage Account   | HTTPS only         | `true`                                          |
-| Key Vault         | Authorization      | RBAC (no access policies)                       |
-| Key Vault         | Purge protection   | `true`                                          |
-| Key Vault         | Soft delete        | 90 days                                         |
-| Azure OpenAI      | Deployment SKU     | `Standard` (PTU blocked by policy)              |
-| Azure OpenAI      | Public access      | Disabled                                        |
-| Azure OpenAI      | Data retention     | 0 days (ZDR)                                    |
-| Log Analytics     | SKU                | `PerGB2018` (commitment >100 blocked by policy) |
-| Cosmos DB         | Backup             | Continuous (7-day PITR)                         |
-| Cosmos DB         | Network            | Private endpoint only                           |
-| ACR               | Admin user         | Disabled                                        |
-| ACR               | Network            | Private endpoint only                           |
-| Container Apps    | Identity           | System-assigned MI                              |
-| Container Apps    | Min replicas       | 1 (avoid cold starts)                           |
-| APIM              | Authentication     | OAuth 2.0 + subscription keys                   |
-| Front Door        | WAF mode           | Detection (→ Prevention after tuning)           |
-| Private Endpoints | Count              | 6 (KV, Storage, EH/SB, Cosmos, ACR, OpenAI)     |
-| Budget            | Forecast alerts    | 80%, 100%, 120% thresholds                      |
+| Resource          | Security Setting   | Value                                                                                     |
+| ----------------- | ------------------ | ----------------------------------------------------------------------------------------- |
+| All services      | TLS version        | `TLS1_2` minimum                                                                          |
+| All services      | Tags               | `Environment`, `ManagedBy`, `Project`, `Owner`                                            |
+| Storage Account   | Public blob access | `false`                                                                                   |
+| Storage Account   | Shared key access  | `false` (Entra ID only)                                                                   |
+| Storage Account   | HTTPS only         | `true`                                                                                    |
+| Key Vault         | Authorization      | RBAC (no access policies)                                                                 |
+| Key Vault         | Purge protection   | `true`                                                                                    |
+| Key Vault         | Soft delete        | 90 days                                                                                   |
+| AI Services       | Resource kind      | `AIServices` (not OpenAI — current model 2026)                                            |
+| AI Services       | Deployment SKU     | `DataZoneStandard` (PTU blocked by policy; `GlobalStandard` excluded — EU data residency) |
+| AI Services       | Public access      | Disabled                                                                                  |
+| AI Services       | Local auth         | Disabled (`disableLocalAuth: true`)                                                       |
+| AI Services       | Content Safety     | Enabled (healthcare regulated — Medium+ block)                                            |
+| AI Services       | Defender for AI    | Enabled (threat protection + MCSB)                                                        |
+| AI Services       | Diagnostics        | RequestResponse + Audit → Log Analytics                                                   |
+| AI Services       | Data retention     | 0 days (ZDR — no inference data stored)                                                   |
+| Log Analytics     | SKU                | `PerGB2018` (commitment >100 blocked by policy)                                           |
+| Cosmos DB         | Backup             | Continuous (7-day PITR)                                                                   |
+| Cosmos DB         | Network            | Private endpoint only                                                                     |
+| ACR               | Admin user         | Disabled                                                                                  |
+| ACR               | Network            | Private endpoint only                                                                     |
+| Container Apps    | Identity           | System-assigned MI                                                                        |
+| Container Apps    | Min replicas       | 1 (avoid cold starts)                                                                     |
+| APIM              | Authentication     | OAuth 2.0 + subscription keys                                                             |
+| APIM              | AI Gateway         | Token rate limit + circuit breaker per hospital                                           |
+| Front Door        | WAF mode           | Detection (→ Prevention after tuning)                                                     |
+| Private Endpoints | Count              | 7 (KV, Storage, EH/SB, Cosmos, ACR, AI Services, AI Foundry)                              |
+| Budget            | Forecast alerts    | 80%, 100%, 120% thresholds                                                                |
 
 ---
 

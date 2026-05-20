@@ -265,7 +265,7 @@ For patterns, read `terraform-patterns/references/tf-best-practices-examples.md`
 > with amount aligned to the Step 2 cost estimate, plus Forecast alerts at 80%/100%/120%
 > thresholds and Anomaly Detection. See `.github/instructions/references/iac-cost-monitoring.md`.
 
-### Phase 4.3–4.4: Adversarial Plan Review (2 lenses max)
+### Phase 4.3–4.4: Adversarial Plan Review (2–3 lenses)
 
 Read `azure-defaults/references/adversarial-review-protocol.md` for lens table,
 prior_findings format, and invocation template.
@@ -274,7 +274,8 @@ to determine pass count
 per the review matrix in `adversarial-review-protocol.md`.
 
 > **Governance review is NOT needed here** — it was already done in Step 3.5.
-> Plan reviews focus on **security-governance** and **architecture-reliability** only.
+> Plan reviews focus on **security-governance** and **architecture-reliability** only,
+> plus **ai-architecture** when AI keywords are detected.
 
 Invoke challenger subagents on `04-implementation-plan.md`
 (up to 2 passes: security-governance + architecture-reliability).
@@ -282,6 +283,11 @@ Follow the conditional pass rules from `adversarial-review-protocol.md` —
 skip pass 2 if pass 1 has 0 `must_fix` and <2 `should_fix`.
 **Model routing**: Pass 1 (security-governance) → `challenger-review-subagent`.
 Pass 2 → `challenger-review-subagent` with `review_focus = "architecture-reliability"`.
+
+**Conditional AI pass**: If `01-requirements.md` contains AI keywords
+(`Azure OpenAI`, `AI Search`, `AI Services`, `Foundry`, `RAG`, `embedding`,
+`LLM`, `AI agent`, `Copilot`, `Document Intelligence`), invoke an additional pass:
+Pass 3 → `challenger-review-subagent` with `review_focus = "ai-architecture"`.
 
 Write results to `agent-output/{project}/challenge-findings-plan-pass{N}.json`.
 

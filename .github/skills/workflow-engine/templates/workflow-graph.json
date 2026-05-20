@@ -113,7 +113,27 @@
             "passes": 2,
             "lenses": ["security-governance", "architecture-reliability"]
           }
-        }
+        },
+        "conditional_lenses": [
+          {
+            "lens": "ai-architecture",
+            "condition": {
+              "requirements_keywords": [
+                "Azure OpenAI",
+                "AI Search",
+                "AI Services",
+                "Foundry",
+                "RAG",
+                "embedding",
+                "LLM",
+                "AI agent",
+                "Copilot",
+                "Document Intelligence"
+              ]
+            },
+            "adds_pass": true
+          }
+        ]
       }
     },
     "gate-3": {
@@ -149,7 +169,27 @@
               "cost-feasibility"
             ]
           }
-        }
+        },
+        "conditional_lenses": [
+          {
+            "lens": "ai-architecture",
+            "condition": {
+              "requirements_keywords": [
+                "Azure OpenAI",
+                "AI Search",
+                "AI Services",
+                "Foundry",
+                "RAG",
+                "embedding",
+                "LLM",
+                "AI agent",
+                "Copilot",
+                "Document Intelligence"
+              ]
+            },
+            "adds_pass": true
+          }
+        ]
       }
     },
     "step-5t": {
@@ -178,7 +218,27 @@
               "cost-feasibility"
             ]
           }
-        }
+        },
+        "conditional_lenses": [
+          {
+            "lens": "ai-architecture",
+            "condition": {
+              "requirements_keywords": [
+                "Azure OpenAI",
+                "AI Search",
+                "AI Services",
+                "Foundry",
+                "RAG",
+                "embedding",
+                "LLM",
+                "AI agent",
+                "Copilot",
+                "Document Intelligence"
+              ]
+            },
+            "adds_pass": true
+          }
+        ]
       }
     },
     "gate-4": {

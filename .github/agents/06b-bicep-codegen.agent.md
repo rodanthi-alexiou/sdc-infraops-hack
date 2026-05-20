@@ -293,7 +293,7 @@ Await both results. Both must pass before Phase 4.5.
 Run `npm run validate:iac-security-baseline` on `infra/bicep/{project}/` —
 violations are a hard gate (fix before Phase 4.5).
 
-### Phase 4.5: Adversarial Code Review (1–3 passes, complexity-based)
+### Phase 4.5: Adversarial Code Review (1–4 passes, complexity-based)
 
 Read `azure-defaults/references/adversarial-review-protocol.md` for lens table and invocation template.
 Check `decisions.complexity` from `apex-recall show <project> --json` to determine pass count per the review matrix in `adversarial-review-protocol.md`.
@@ -305,6 +305,11 @@ Check `decisions.complexity` from `apex-recall show <project> --json` to determi
   0 `must_fix` and <2 `should_fix`; skip pass 3 if pass 2 has 0 `must_fix`)
 - `complex`: up to 3 passes (same early exit rules; use batch subagent
   for passes 2+3 if pass 1 triggers them)
+
+**Conditional AI pass**: If `01-requirements.md` contains AI keywords
+(`Azure OpenAI`, `AI Search`, `AI Services`, `Foundry`, `RAG`, `embedding`,
+`LLM`, `AI agent`, `Copilot`, `Document Intelligence`), invoke an additional pass
+with `review_focus = "ai-architecture"` after the standard passes complete.
 
 Invoke challenger subagents with `artifact_type = "iac-code"`,
 rotating `review_focus` per protocol.

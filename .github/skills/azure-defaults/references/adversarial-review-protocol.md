@@ -36,6 +36,14 @@ when explicitly requested or when the Orchestrator recommends it for complex pro
 | 1    | `security-governance`      | Policy compliance, identity, network isolation, encryption  |
 | 2    | `architecture-reliability` | WAF balance, SLA feasibility, failure modes, dependencies   |
 | 3    | `cost-feasibility`         | SKU sizing, pricing realism, budget alignment, reservations |
+| 4\*  | `ai-architecture`          | AI workload patterns, content safety, PTU, AI gateway       |
+
+\* **Pass 4 is conditional**: Only invoked when `01-requirements.md` contains AI keywords
+(`Azure OpenAI`, `AI Search`, `AI Services`, `Foundry`, `RAG`, `embedding`, `LLM`,
+`AI agent`, `Copilot`, `Document Intelligence`). Runs after all standard passes complete,
+regardless of early exit decisions on passes 2–3. Loads checklist from
+`azure-defaults/references/adversarial-checklist-ai-architecture.md` and domain knowledge
+from the `azure-ai-architect` skill.
 
 > **Pass 2 is conditional**: Only invoke pass 2 if pass 1 returned ≥1 `must_fix` OR ≥2 `should_fix`.
 > If pass 1 returns 0 `must_fix` and <2 `should_fix`, skip pass 2 and proceed to approval gate.

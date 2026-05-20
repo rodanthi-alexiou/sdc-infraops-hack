@@ -177,3 +177,95 @@ npm run lint:skills-format
 # Full suite
 npm run validate:all
 ```
+
+---
+
+## CareFlow AI — EU Data Residency Fix (GlobalStandard → DataZoneStandard)
+
+**Date:** May 20, 2026
+**Triggered by:** Governance review of `04-implementation-plan.md` — `GlobalStandard` Azure OpenAI SKU routes inference globally and violates GDPR Art.44 + NEN 7510 §13 for Dutch hospital PHI.
+**Scope:** `agent-output/careflow-ai/` + `azure-ai-architect` and `azure-bicep-patterns` skills.
+
+### What Changed (4 files)
+
+| File                                                                      | Change                                                                                                                                                                                                                           |
+| ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `agent-output/careflow-ai/04-implementation-plan.md`                      | 8 occurrences of `GlobalStandard` → `DataZoneStandard`; governance constraint reference updated to `#1 + #3`                                                                                                                     |
+| `agent-output/careflow-ai/04-governance-constraints.md`                   | Added Regulatory Constraint #3 (EU data residency); fixed stale `Standard` references in compliance table and deployment blockers; added GDPR/NEN 7510 rows to Security Policies table; updated Healthcare Regulatory Note       |
+| `.github/skills/azure-ai-architect/references/ai-deployment-decisions.md` | SKU table expanded to 6 rows with `DataZoneStandard`, `DataZoneProvisioned`, `GlobalProvisionedManaged`; added data residency guarantee column; added decision guide defaulting to `DataZoneStandard` for EU-regulated workloads |
+| `.github/skills/azure-bicep-patterns/references/ai-services-patterns.md`  | Bicep example SKU changed from `GlobalStandard` → `DataZoneStandard`; inline comment and key-parameters note updated to prohibit `GlobalStandard` for EU workloads                                                               |
+
+### Key SKU Distinction
+
+| SKU                | Routing                       | GDPR/NEN 7510 | Use for CareFlow AI                    |
+| ------------------ | ----------------------------- | ------------- | -------------------------------------- |
+| `GlobalStandard`   | Global — may leave EU/EEA     | ❌ Prohibited | Never                                  |
+| `DataZoneStandard` | EU geographic zone only       | ✅ Compliant  | Default (PAYG)                         |
+| `Standard`         | Region-pinned (swedencentral) | ✅ Compliant  | Fallback if DataZone quota unavailable |
+
+### Governance Constraint #3 Summary
+
+- **Type**: Regulatory (not Azure Policy-detected)
+- **Frameworks**: GDPR Article 44, NEN 7510:2017 §13
+- **Rule**: All `Microsoft.CognitiveServices/accounts/deployments` must set `sku.name = 'DataZoneStandard'`
+- **Enforcement point**: Step 5 Bicep CodeGen — verified by `adversarial-checklist-ai-architecture.md` item 9
+
+---
+
+## Conditional AI-Architecture Challenger Lens
+
+**Date:** June 2025
+**Triggered by:** Gap analysis of `04-implementation-plan.md` for CareFlow AI against the
+`azure-ai-architect` skill — 9 gaps found that the existing challenger lenses would not catch.
+**Scope:** New conditional `ai-architecture` challenger lens wired across Steps 4, 5b, and 5t.
+
+### Why
+
+The CareFlow AI implementation plan passed through standard challenger review (security-governance,
+architecture-reliability, cost-feasibility) but missed AI-specific concerns:
+
+1. AI resource naming (`oai-` used instead of CAF `aisa-` prefix)
+2. No content safety filters specified for Azure OpenAI deployments
+3. Missing Microsoft Defender for AI enrollment
+4. No APIM AI gateway policies (token limits, semantic caching, jailbreak detection)
+5. Missing Azure Firewall rules for AI service egress
+6. No DDoS protection for AI endpoints
+7. Missing AI-specific diagnostics (token metrics, model latency, RAG accuracy)
+8. Generic RBAC — no specific Cognitive Services role IDs
+9. No token cost breakdown (PTU vs PAYG analysis absent)
+
+**Root cause**: The challenger subagent had no mechanism to load domain-specific AI knowledge.
+Generic security/reliability/cost lenses lack the specificity to catch AI workload gaps.
+
+### What Changed (7 files)
+
+| File                                                                                | Change                                                                                               |
+| ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `.github/skills/azure-defaults/references/adversarial-checklist-ai-architecture.md` | **New** — 24-item machine-actionable checklist (6 sections, must_fix/should_fix/suggestion severity) |
+| `.github/agents/_subagents/challenger-review-subagent.agent.md`                     | Added `ai-architecture` lens definition, conditional skill loading section, reference index entries  |
+| `.github/skills/workflow-engine/templates/workflow-graph.json`                      | Added `conditional_lenses` array to step-4, step-5b, step-5t challenger configs                      |
+| `.github/agents/05-iac-planner.agent.md`                                            | Updated Phase 4.3–4.4 heading to "2–3 lenses", added conditional AI pass paragraph                   |
+| `.github/agents/06b-bicep-codegen.agent.md`                                         | Updated Phase 4.5 heading to "1–4 passes", added conditional AI pass paragraph                       |
+| `.github/agents/06t-terraform-codegen.agent.md`                                     | Updated Phase 4.5 heading to "1–4 passes", added conditional AI pass paragraph                       |
+| `.github/skills/azure-defaults/references/adversarial-review-protocol.md`           | Added Pass 4 row (conditional) to Multi-Pass Rotating Lenses table with activation rules             |
+
+### How It Works
+
+1. **Keyword detection**: When `01-requirements.md` contains any of:
+   `Azure OpenAI`, `AI Search`, `AI Services`, `Foundry`, `RAG`, `embedding`,
+   `LLM`, `AI agent`, `Copilot`, `Document Intelligence`
+2. **Additional pass triggered**: The challenger subagent is invoked with
+   `review_focus = "ai-architecture"` after all standard passes complete
+3. **Skill + checklist loaded**: The subagent loads `adversarial-checklist-ai-architecture.md`
+   (24 items) and the `azure-ai-architect` SKILL.md for domain knowledge
+4. **Standard early-exit unaffected**: The conditional pass runs independently of
+   pass 2/3 early-exit decisions — if AI keywords exist, it always runs
+
+### Design Decisions
+
+- **Conditional, not always-on**: Avoids wasting a review pass on non-AI projects
+- **Keywords from requirements (not plan)**: Requirements are available earliest;
+  keyword list matches the `azure-ai-architect` skill trigger keywords
+- **`adds_pass: true`**: Increases max pass count rather than replacing an existing lens
+- **Checklist + skill dual-source**: Checklist provides structured items with severity;
+  skill provides deeper domain reasoning for nuanced judgments

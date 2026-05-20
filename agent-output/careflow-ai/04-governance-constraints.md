@@ -62,7 +62,8 @@
 
 | Category                                 | Constraint                                                                                                            | Implementation                                                                                        | Status |
 | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ------ |
-| Cognitive Services                       | Block Azure OpenAI Provisioned Capacity                                                                               | Use PAYG `Standard` SKU on all OpenAI deployments; PTU/Provisioned SKU is blocked by policy           | ❌ |
+| Cognitive Services                       | Block Azure OpenAI Provisioned Capacity                                                                               | Use PAYG SKU on all OpenAI deployments; PTU/Provisioned SKU is blocked by policy                      | ❌     |
+| Regulatory — EU Data Residency           | GDPR Art.44 + NEN 7510 §13: PHI must not be processed outside EU/EEA                                                  | Use `DataZoneStandard` SKU (EU zone); `GlobalStandard` prohibited — data may route outside EU/EEA     | ❌     |
 | Compute                                  | Block VM SKU Sizes                                                                                                    | Not applicable — no Azure VMs in architecture; Container Apps Consumption used                        | ✅     |
 | Compute                                  | Deny AKS deployment with agent pool count greater than 10                                                             | Not applicable — Container Apps used, not AKS                                                         | ✅     |
 | Compute                                  | Deny VMSS deployment with instance count greater than 10                                                              | Not applicable — no VMSS in architecture                                                              | ✅     |
@@ -71,7 +72,7 @@
 | Managed Identity for Guest Configuration | Add system-assigned managed identity to enable Guest Configuration assignments on virtual machines with no identities | Not applicable — no Azure VMs in architecture                                                         | ✅     |
 | Managed identity for Guest Configuration | Add system-assigned managed identity to enable Guest Configuration assignments on VMs with a user-assigned identity   | Not applicable — no Azure VMs in architecture                                                         | ✅     |
 | Modify Allow Blob anonymous access       | Ensure secure access to storage account containers                                                                    | Aligned — `allowBlobPublicAccess: false` enforced in Bicep; policy auto-confirms this setting         | ✅     |
-| Monitoring                               | Block Azure Sentinel Commitment over 100                                                                              | Cap Log Analytics `capacityReservationLevel` ≤ 100 GB/day; use `PerGB2018` SKU to avoid boundary risk | ❌ |
+| Monitoring                               | Block Azure Sentinel Commitment over 100                                                                              | Cap Log Analytics `capacityReservationLevel` ≤ 100 GB/day; use `PerGB2018` SKU to avoid boundary risk | ❌     |
 | Uncategorized                            | Block Azure RM Resource Creation                                                                                      | Not applicable — all resources are ARM-based; no Classic Azure resources                              | ✅     |
 | Uncategorized                            | Deploy Resource Group McapsGovernance                                                                                 | Auto-deployed by policy at subscription scope; no IaC action required                                 | ✅     |
 | Uncategorized                            | Deploy Storage Account for Diagnostic Settings                                                                        | Auto-deployed; verify it does not conflict with private DNS zones for Storage Account                 | ✅     |
@@ -165,11 +166,34 @@
 
 **Required IaC change**:
 
-- Set `sku: { name: 'Standard' }` on all Azure OpenAI deployment resources
-- Do NOT use `ProvisionedManaged`, `DataZoneProvisionedManaged`, or `GlobalProvisionedManaged` SKU names
-- Bicep path: `accounts/deployments::sku.name` must equal `Standard`
+- Set `sku: { name: 'DataZoneStandard' }` on all Azure OpenAI deployment resources — see Regulatory Constraint #3 below
+- Do NOT use `ProvisionedManaged`, `DataZoneProvisionedManaged`, or `GlobalProvisionedManaged` SKU names (blocked by this policy)
+- Do NOT use `GlobalStandard` (blocked by Regulatory Constraint #3 — EU data residency)
+- Bicep path: `accounts/deployments::sku.name` must equal `DataZoneStandard`
 
 **Cost impact**: PAYG pricing (per-token) instead of reserved PTU. Architecture cost estimate (€120–180/month) already assumes PAYG — no cost delta.
+
+---
+
+### Regulatory Constraint #3 — EU Data Residency (GDPR Art.44 / NEN 7510)
+
+- **Source**: Regulatory requirement — not Azure Policy
+- **Frameworks**: GDPR Article 44 (prohibition on transfers to third countries), NEN 7510:2017 §13 (Dutch healthcare information security)
+- **Category**: AI / Cognitive Services
+- **Bicep Property Path**: `accounts/deployments::sku.name`
+- **Prohibited value**: `GlobalStandard` — routes inference requests globally; Microsoft may process data in datacenters outside the EU/EEA
+- **Required value**: `DataZoneStandard` — constrains processing to the EU geographic zone (Europe data zone); available in `swedencentral`
+- **Fallback**: `Standard` (region-pinned to swedencentral) if `DataZoneStandard` quota is unavailable — lower TPM ceiling
+
+**Architecture applicability**: ❗ **APPLIES** — CareFlow AI processes Protected Health Information (PHI) from 25 Dutch hospitals. GDPR Art.44 prohibits transferring personal data to third countries without adequate safeguards. `GlobalStandard` does not guarantee EU-only processing.
+
+**Required IaC change**:
+
+- `sku: { name: 'DataZoneStandard', capacity: <n> }` on all `Microsoft.CognitiveServices/accounts/deployments` resources
+- Add deployment parameter `@description('EU zone SKU — DataZoneStandard required for GDPR/NEN 7510')` in Bicep
+- Document in `azure.yaml` / deployment guide: operator must confirm `DataZoneStandard` quota in swedencentral before provisioning
+
+**Cost impact**: `DataZoneStandard` is PAYG (same billing model as `GlobalStandard`). No cost delta vs. architecture estimate.
 
 - **Policy ID**: `/providers/Microsoft.Management/managementGroups/f0b9af07-2731-4a6d-984a-3a2e96a90fc2/providers/Microsoft.Authorization/policyDefinitions/Sentinel_Commitment_Deny`
 - **Effect**: deny
@@ -228,9 +252,11 @@ flowchart TD
 
 ## 🔐 Security Policies
 
-| Policy                                                         | Effect | Status                                                  |
-| -------------------------------------------------------------- | ------ | ------------------------------------------------------- |
-| Deny Azure Key Vault Managed HSM with Purge Protection Enabled | deny   | ✅ N/A — Key Vault Premium vaults used, not Managed HSM |
+| Policy                                                         | Effect     | Status                                                                                     |
+| -------------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------ |
+| Deny Azure Key Vault Managed HSM with Purge Protection Enabled | deny       | ✅ N/A — Key Vault Premium vaults used, not Managed HSM                                    |
+| GDPR Art.44 — No transfers outside EU/EEA (regulatory)         | regulatory | ❌ **APPLIES** — `DataZoneStandard` required for Azure OpenAI; `GlobalStandard` prohibited |
+| NEN 7510:2017 §13 — Data residency for Dutch healthcare PHI    | regulatory | ❌ **APPLIES** — `DataZoneStandard` required; confirms EU/EEA processing zone              |
 
 ## 💰 Cost Policies
 
@@ -263,6 +289,8 @@ No network-specific policies discovered.
 > **MFA Policies (CI/CD clarification)**: MFA enforcement targets interactive user sign-ins via Conditional Access and does NOT apply to service principals or managed identities. Automated CI/CD deployments using a service principal (OIDC) are exempt — no pipeline impact.
 >
 > **Healthcare Regulatory Note**: NEN 7510 (statutory for Dutch healthcare) and GDPR Article 32/44 compliance cannot be fully verified from Azure Policy assignments alone. Operational controls for PHI access logging, pseudonymization, breach notification, and data residency confirmation must be validated separately before production go-live. Tag this as a pre-production gate for the Step 7 (As-Built) agent.
+>
+> **Constraint #3 — Action Required**: Azure OpenAI deployments must use `DataZoneStandard` SKU. This is documented in `04-implementation-plan.md` (Tasks 9, Phase 2). Bicep CodeGen agent (Step 5) must not use `GlobalStandard` — see `ai-deployment-decisions.md` in `azure-ai-architect` skill for SKU selection guidance.
 
 ## References
 

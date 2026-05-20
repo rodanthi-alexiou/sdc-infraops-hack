@@ -38,7 +38,7 @@ module aiServices 'br/public:avm/res/cognitive-services/account:0.9.0' = {
       {
         name: 'gpt-4o'
         model: { format: 'OpenAI', name: 'gpt-4o', version: '2024-11-20' }
-        sku: { name: 'GlobalStandard', capacity: 10 }
+        sku: { name: 'DataZoneStandard', capacity: 10 }  // EU zone — required for GDPR/NEN 7510; see Governance Constraint #3
       }
     ]
     diagnosticSettings: [
@@ -55,7 +55,7 @@ module aiServices 'br/public:avm/res/cognitive-services/account:0.9.0' = {
 
 - `kind: 'AIServices'` — bundles OpenAI, Document Intelligence, and agent orchestration in one resource
 - `publicNetworkAccess: 'Disabled'` — mandatory for production; pair with a private endpoint
-- `deployments` — declare model deployments inline; use `GlobalStandard` SKU first, fall back to `Standard`
+- `deployments` — declare model deployments inline; use `DataZoneStandard` (EU geographic zone, GDPR/NEN 7510 compliant); fall back to `Standard` (region-pinned) only if DataZone quota is unavailable — **never use `GlobalStandard` for EU-regulated workloads** (data may route outside EU/EEA)
 
 ---
 

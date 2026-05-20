@@ -49,14 +49,23 @@ Where:
 cost-per-token than `Standard` (region-pinned). Use for non-latency-sensitive,
 high-volume scenarios (CO-R3):
 
-| SKU name             | Routing       | When to use                                             |
-| -------------------- | ------------- | ------------------------------------------------------- |
-| `GlobalStandard`     | Global        | PAYG; non-latency-sensitive; higher TPM quota available |
-| `Standard`           | Region-pinned | PAYG; use only if data residency constraint applies     |
-| `ProvisionedManaged` | Region-pinned | PTU; reserved capacity; lowest P99 latency              |
+| SKU name                   | Routing         | Data residency guarantee | When to use                                                              |
+| -------------------------- | --------------- | ------------------------ | ------------------------------------------------------------------------ |
+| `GlobalStandard`           | Global          | None — may leave EU/EEA  | PAYG; non-latency-sensitive; highest TPM quota; **not for EU-regulated** |
+| `DataZoneStandard`         | Geographic zone | Within EU/EEA zone       | PAYG; EU data residency (GDPR Art.44, NEN 7510); swedencentral supported |
+| `Standard`                 | Region-pinned   | Single region only       | PAYG; fallback if DataZone quota unavailable; lower TPM ceiling          |
+| `ProvisionedManaged`       | Region-pinned   | Single region only       | PTU; reserved capacity; lowest P99 latency                               |
+| `GlobalProvisionedManaged` | Global          | None                     | PTU; global routing; highest throughput                                  |
+| `DataZoneProvisioned`      | Geographic zone | Within EU/EEA zone       | PTU; EU-zone reserved capacity                                           |
 
-Set `sku.name: 'GlobalStandard'` in the Bicep deployment block unless requirements state
-a data residency constraint that requires `Standard`.
+**Default choice by compliance profile:**
+
+- EU-regulated workloads (GDPR, NEN 7510, healthcare, public sector): use `DataZoneStandard`
+- Non-EU or no data residency constraint: use `GlobalStandard`
+- PTU blocked by Azure Policy: `DataZoneStandard` or `Standard` (PAYG only)
+
+Set `sku.name: 'DataZoneStandard'` for EU-regulated workloads. Use `GlobalStandard`
+only when requirements explicitly confirm no data residency constraint.
 
 ### PTU + PAYG Spillover Pattern
 

@@ -110,7 +110,11 @@ When `review_focus` is set, concentrate adversarial energy on that lens:
 - **`architecture-reliability`** — SLA achievability, RTO/RPO validation, SPOF analysis, dependency ordering, WAF balance
 - **`cost-feasibility`** — SKU-to-requirement mismatch,
   hidden costs (egress/transactions/logs), free-tier risk, budget alignment
-- **`comprehensive`** — All three lenses applied broadly (used for single-pass reviews at Steps 1, 6)
+- **`ai-architecture`** — AI-specific: resource model (kind: AIServices), PTU/PAYG decision, content safety,
+  private endpoints for AI services, RBAC roles, AI gateway patterns, token cost, AI Search replica count.
+  **Conditional activation**: Only invoked when requirements contain AI keywords (Azure OpenAI, AI Search,
+  AI Services, Foundry, RAG, embedding, LLM, AI agent, Copilot, Document Intelligence)
+- **`comprehensive`** — All lenses applied broadly (used for single-pass reviews at Steps 1, 6)
 
 ## Analysis Categories
 
@@ -140,14 +144,24 @@ Scope Risk · Architectural Weakness · Governance Gap · WAF Blind Spot.
 Read `.github/skills/azure-defaults/references/adversarial-checklists.md` for the full
 per-category and per-artifact-type checklists, plus Azure Infrastructure Skepticism Surfaces.
 
+### Conditional Skill Loading — AI Architecture Lens
+
+When `review_focus = "ai-architecture"` (or `comprehensive` on an AI workload):
+
+1. **Read** `.github/skills/azure-defaults/references/adversarial-checklist-ai-architecture.md` — the 24-item AI-specific checklist
+2. **Read** `.github/skills/azure-ai-architect/SKILL.md` — quick reference table only (do NOT load all sub-references unless a check requires verification)
+3. Apply each checklist item against the artifact, generating findings for failed checks
+
 ## Reference Index
 
-| Reference                                    | Path                                                                      |
-| -------------------------------------------- | ------------------------------------------------------------------------- |
-| Adversarial checklists & skepticism surfaces | `.github/skills/azure-defaults/references/adversarial-checklists.md`      |
-| Artifact-type-specific categories            | `.github/skills/azure-defaults/references/artifact-type-categories.md`    |
-| Adversarial review protocol                  | `.github/skills/azure-defaults/references/adversarial-review-protocol.md` |
-| Golden Principles                            | `.github/skills/golden-principles/SKILL.digest.md`                        |
+| Reference                                    | Path                                                                                |
+| -------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Adversarial checklists & skepticism surfaces | `.github/skills/azure-defaults/references/adversarial-checklists.md`                |
+| AI architecture checklist (conditional)      | `.github/skills/azure-defaults/references/adversarial-checklist-ai-architecture.md` |
+| Artifact-type-specific categories            | `.github/skills/azure-defaults/references/artifact-type-categories.md`              |
+| Adversarial review protocol                  | `.github/skills/azure-defaults/references/adversarial-review-protocol.md`           |
+| Azure AI Architect skill (conditional)       | `.github/skills/azure-ai-architect/SKILL.md`                                        |
+| Golden Principles                            | `.github/skills/golden-principles/SKILL.digest.md`                                  |
 
 <output_contract>
 Return ONLY valid JSON matching the schema below. No markdown wrapper, no explanation outside JSON.
