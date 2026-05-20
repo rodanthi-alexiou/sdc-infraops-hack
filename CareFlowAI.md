@@ -99,7 +99,7 @@ You are the **Platform Engineering team**.
 | SLA             | 99.9%                                                                          |
 | RTO             | 4 hours (initially)                                                            |
 | RPO             | 1 hour (initially)                                                             |
-| Peak Agent Load | 200 concurrent agent executions                                                |
+| Peak Agent Load | 4 concurrent agent executions                                                  |
 | Scale Event     | 5× volume when large hospital network onboards                                 |
 | Authentication  | Managed Identity (internal), Entra External ID (hospital users)                |
 | Network         | Private endpoints for all data services; public API gateway acceptable for MVP |
