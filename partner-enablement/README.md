@@ -97,8 +97,8 @@ Added capabilities for ISV scenarios:
 
 ```bash
 # 1. Clone this repo
-git clone https://github.com/rodanthi-alexiou/roda-infraops-hack.git
-cd roda-infraops-hack
+git clone https://github.com/rodanthi-alexiou/sdc-infraops-hack.git
+cd sdc-infraops-hack
 
 # 2. Open in VS Code and reopen in Dev Container
 code .

@@ -23,9 +23,20 @@ This repository is a **spinoff** of the
 [APEX — Agentic Platform Engineering eXperience](https://github.com/jonathan-vella/azure-agentic-infraops)
 project created by [Jonathan Vella](https://github.com/jonathan-vella).
 
-It was forked to serve as the working environment for a **CareFlow AI** healthcare platform engineering
-scenario — designing and deploying the Azure infrastructure that enables AI agents to operate at scale
-for hospital operational intelligence.
+The original APEX accelerator handles any Azure infrastructure scenario. This repo fine-tunes it for **AI-first ISV workloads** — the messy reality where:
+
+- You already HAVE a product (brownfield, not greenfield)
+- You need **multi-tenant agent isolation** (your customers don't share data)
+- You need **cost projections per customer** (agents can't eat your margin)
+- You need to pass **security review** before writing a single line of code
+- You need architecture that **scales from 5 customers to 500** without rearchitecting
+
+Added capabilities for ISV scenarios:
+
+- **AI Workload Architecture** — PTU vs PAYG decisions, RAG patterns, content safety gates
+- **Multi-Tenant Patterns** — Per-tenant isolation for AI Search, Cosmos DB, agent runtimes
+- **Governance Discovery** — Queries your ACTUAL Azure Policy assignments (not generic checklists)
+- **Cost Economics** — Token cost projections, PTU break-even analysis, per-customer cost attribution
 
 ### Changes from Upstream
 
