@@ -60,5 +60,6 @@
   "deno.enable": false,
   "deno.enablePaths": ["tools/mcp-servers/drawio"],
   "deno.lint": true,
-  "deno.unstable": []
+  "deno.unstable": [],
+  "github.copilot.advanced.debug.overrideLogLevels": { "default": "verbose" }
 }
