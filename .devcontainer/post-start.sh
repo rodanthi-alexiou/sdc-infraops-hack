@@ -46,12 +46,51 @@ fi
 
 # ─── Azure Pricing MCP ───────────────────────────────────────────────────────
 MCP_DIR="${WORKSPACE_FOLDER:-$PWD}/tools/mcp-servers/azure-pricing"
-if [ -f "$MCP_DIR/.venv/bin/pip" ]; then
-    "$MCP_DIR/.venv/bin/pip" install --quiet --upgrade pip 2>/dev/null || true
-    printf "    azure-pricing-mcp     "
-    "$MCP_DIR/.venv/bin/pip" install --quiet -e "$MCP_DIR[azure]" \
-        && printf "✅ updated\n" \
-        || printf "⚠️  update failed (continuing)\n"
+if [ -d "$MCP_DIR" ]; then
+    # Detect stale venv (Python minor mismatch after container upgrade) or
+    # broken pip. Rebuild rather than chasing a half-broken venv on every
+    # post-start run (post-create.sh has matching logic).
+    SYS_PY_VER=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")' 2>/dev/null || echo "")
+    VENV_PY_VER=""
+    if [ -f "$MCP_DIR/.venv/pyvenv.cfg" ]; then
+        VENV_PY_VER=$(grep -E '^version' "$MCP_DIR/.venv/pyvenv.cfg" 2>/dev/null \
+            | head -1 | awk '{print $3}' | cut -d'.' -f1-2)
+    fi
+    REBUILD_VENV=0
+    REBUILD_REASON=""
+    if [ ! -f "$MCP_DIR/.venv/bin/python" ]; then
+        REBUILD_VENV=1
+        REBUILD_REASON="missing venv"
+    elif [ -n "$VENV_PY_VER" ] && [ -n "$SYS_PY_VER" ] && [ "$VENV_PY_VER" != "$SYS_PY_VER" ]; then
+        REBUILD_VENV=1
+        REBUILD_REASON="Python ${VENV_PY_VER} → ${SYS_PY_VER} drift"
+    elif ! "$MCP_DIR/.venv/bin/python" -m pip --version >/dev/null 2>&1; then
+        REBUILD_VENV=1
+        REBUILD_REASON="broken pip"
+    fi
+    if [ "$REBUILD_VENV" -eq 1 ]; then
+        printf "    azure-pricing-mcp     "
+        # Capture stderr to a log so failures are diagnosable without re-running
+        # under set -x. Log path stays in /tmp so it's gitignore-safe.
+        REBUILD_LOG="/tmp/azure-pricing-mcp-rebuild.log"
+        rm -rf "$MCP_DIR/.venv" 2>/dev/null || true
+        if { python3 -m venv "$MCP_DIR/.venv" \
+            && "$MCP_DIR/.venv/bin/python" -m pip install --quiet --upgrade pip \
+            && "$MCP_DIR/.venv/bin/python" -m pip install --quiet -e "$MCP_DIR[admin]"; } > "$REBUILD_LOG" 2>&1; then
+            printf "✅ rebuilt (%s)\n" "$REBUILD_REASON"
+            rm -f "$REBUILD_LOG" 2>/dev/null || true
+        else
+            printf "⚠️  rebuild failed (%s) — see %s\n" "$REBUILD_REASON" "$REBUILD_LOG"
+            tail -3 "$REBUILD_LOG" 2>/dev/null | sed 's/^/        /' || true
+        fi
+    elif [ -f "$MCP_DIR/.venv/bin/python" ]; then
+        "$MCP_DIR/.venv/bin/python" -m pip install --quiet --upgrade pip 2>/dev/null || true
+        printf "    azure-pricing-mcp     "
+        # ``[admin]`` is canonical (v5.x); ``[azure]`` is a deprecated alias.
+        "$MCP_DIR/.venv/bin/python" -m pip install --quiet -e "$MCP_DIR[admin]" \
+            && printf "✅ updated\n" \
+            || printf "⚠️  update failed (continuing)\n"
+    fi
 fi
 
 # ─── npm local dependencies ──────────────────────────────────────────────────
@@ -60,8 +99,29 @@ npm install --loglevel=error 2>&1 | tail -1 \
     && printf "✅ ok\n" \
     || printf "⚠️  npm install failed (continuing)\n"
 
-# ─── Azure Developer CLI (azd) auth check ────────────────────────────────────
+# ─── Azure Developer CLI (azd) version + auth check ─────────────────────────
+# The devcontainer feature only runs at image-build time, so a cached rebuild
+# never refreshes azd. Compare installed version to the latest GitHub release
+# and run the official installer when behind. Network failures (rate limit,
+# offline) downgrade to a non-fatal skip so container start never blocks here.
 if command -v azd &>/dev/null; then
+    printf "    azd version           "
+    AZD_CURRENT=$(azd version 2>/dev/null | head -n1 | awk '{print $3}' | tr -d ',')
+    AZD_LATEST=$(curl -fsSL --max-time 5 https://api.github.com/repos/Azure/azure-dev/releases/latest 2>/dev/null \
+        | grep '"tag_name"' | head -1 | sed -E 's/.*"azure-dev-cli_([^"]+)".*/\1/')
+    if [ -z "$AZD_LATEST" ]; then
+        printf "⚠️  latest version lookup failed (have %s) — skipping\n" "${AZD_CURRENT:-unknown}"
+    elif [ "$AZD_CURRENT" = "$AZD_LATEST" ]; then
+        printf "✅ %s (latest)\n" "$AZD_CURRENT"
+    else
+        printf "⬆️  upgrading %s → %s ... " "${AZD_CURRENT:-unknown}" "$AZD_LATEST"
+        if curl -fsSL --max-time 60 https://aka.ms/install-azd.sh | bash >/dev/null 2>&1; then
+            printf "✅ done\n"
+        else
+            printf "⚠️  upgrade failed (have %s)\n" "${AZD_CURRENT:-unknown}"
+        fi
+    fi
+
     printf "    azd auth              "
     if azd auth token --output json &>/dev/null; then
         printf "✅ authenticated\n"

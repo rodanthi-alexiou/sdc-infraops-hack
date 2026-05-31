@@ -1,6 +1,6 @@
 ---
 name: terraform-patterns
-description: "Reusable Azure Terraform patterns: hub-spoke, private endpoints, diagnostics, AVM-TF modules. USE FOR: Terraform template design, hub-spoke networking, AVM modules, plan interpretation. DO NOT USE FOR: Bicep code, architecture decisions, troubleshooting, diagram generation."
+description: '**UTILITY SKILL** — Reusable Azure Terraform patterns: hub-spoke, private endpoints, diagnostics, AVM-TF modules. WHEN: "hub-spoke Terraform", "private endpoint module", "AVM-TF composition", "diagnostic settings", "plan interpretation". DO NOT USE FOR: Bicep code (azure-bicep-patterns), ADRs (azure-adr), diagrams (drawio).'
 compatibility: Requires Terraform >= 1.9, azurerm ~> 4.0, Azure CLI
 ---
 
@@ -8,6 +8,13 @@ compatibility: Requires Terraform >= 1.9, azurerm ~> 4.0, Azure CLI
 
 Composable architecture building blocks for Azure Terraform. Complements
 `iac-terraform-best-practices.instructions.md` (style) and `azure-defaults` skill (naming, tags, regions).
+
+> **Canonical sources** — the security baseline, AVM-first mandate, naming
+> conventions, required tags, and unique-suffix rule live in
+> [`azure-defaults/SKILL.md`](../azure-defaults/SKILL.md) and
+> [`iac-policy-compliance.md`](../../instructions/references/iac-policy-compliance.md).
+> This skill restates the rules tersely below for IaC-output convenience
+> only; in conflict, the canonical sources win.
 
 ---
 
@@ -31,33 +38,21 @@ Composable architecture building blocks for Azure Terraform. Complements
 
 ## Canonical Example — Module Composition
 
-Wire AVM child modules by passing outputs as inputs; never hardcode IDs:
-
-```hcl
-module "resource_group" {
-  source  = "Azure/avm-res-resources-resourcegroup/azurerm"
-  version = "~> 0.1"
-  name     = "rg-${var.project}-${var.environment}"
-  location = var.location
-  tags     = local.tags
-}
-
-module "key_vault" {
-  source  = "Azure/avm-res-keyvault-vault/azurerm"
-  version = "~> 0.9"
-  name                = local.kv_name
-  resource_group_name = module.resource_group.name  # ← output wiring
-  location            = var.location
-  tenant_id           = data.azurerm_client_config.current.tenant_id
-  tags                = local.tags
-}
-```
+Wire AVM child modules by passing outputs as inputs (`module.<name>.<output>`); never
+hardcode IDs. **AVM-TF module versions in APEX-generated code MUST be exact semver
+(`version = "X.Y.Z"`)** — pinned at plan time from
+`registry.terraform.io` (newest stable in `modules[0].versions[]`). Range
+constraints (`~> X.Y`, `>= X.Y.Z`) are NOT allowed in `04-iac-contract.json` and
+will be flagged by `npm run validate:avm-versions`. Full code sample
+(resource group + key vault) and rationale in
+[`references/module-composition.md`](references/module-composition.md).
 
 ---
 
-## Key Rules
+## Rules
 
 - **AVM-first**: Use `Azure/avm-res-*` registry modules over raw `azurerm_*` resources
+- **AVM-TF version pins**: Exact semver only (`version = "X.Y.Z"`) — resolve the latest stable via `registry.terraform.io/v1/modules/Azure/avm-res-{path}/azurerm/versions` at plan time. Stale pins need a `pin_policy.mode = "exception"` block in `04-iac-contract.json`. Range constraints (`~>`, `>=`) are flagged by `validate:avm-versions`.
 - **Hub-spoke**: Spokes peer to hub only; never spoke-to-spoke
 - **Private endpoints**: Three resources per service — PE, DNS zone, VNet link
 - **Diagnostics**: Every resource MUST have a diagnostic setting → Log Analytics
@@ -67,6 +62,18 @@ module "key_vault" {
 - **Telemetry**: Set `enable_telemetry = false` in restricted-network environments
 - **Moved blocks**: Use `moved {}` when renaming resources to prevent destroy/recreate
 - **Budget**: 3 forecast thresholds (80%/100%/120%); amount and emails MUST be variables
+
+## Steps
+
+Applying a Terraform pattern in a root module:
+
+1. **Identify the pattern** — match your need to a row in [Quick Reference](#quick-reference) (hub-spoke, private endpoint, diagnostics, conditional, identity, budget, plan interpretation)
+2. **Load the reference** — read the linked `references/*.md`; do not load all at once
+3. **Compose AVM modules** — wire outputs as inputs (see [Canonical Example](#canonical-example--module-composition)); never hardcode IDs
+4. **Pin the provider** — `~> 4.0` only; do not use `>= 3.0` or exact `= 4.x.y`
+5. **Add diagnostics + budget** — every resource gets a diagnostic setting; every deployment gets a budget with 80%/100%/120% forecast alerts
+6. **Plan before apply** — `terraform plan -out=plan.tfplan`; review for `~`/`-`/`+/-` operations against [`references/plan-interpretation.md`](references/plan-interpretation.md)
+7. **Validate** — `terraform fmt -check`, `terraform validate`, `npm run validate:terraform`, `npm run validate:iac-security-baseline`
 
 ## Gotchas
 
@@ -104,3 +111,4 @@ module "key_vault" {
 | `references/project-scaffold.md`           | Project scaffolding structure                                     |
 | `references/avm-authoring-requirements.md` | AVM certification: 37 requirements, compliance checklist          |
 | `references/refactor-module.md`            | Module extraction, state migration, refactoring patterns          |
+| `references/module-composition.md`         | Canonical AVM module composition example with output wiring       |

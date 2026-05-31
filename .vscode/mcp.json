@@ -22,10 +22,6 @@
       "args": ["stdio", "--toolsets", "registry"],
       "env": {}
     },
-    "microsoft-learn": {
-      "type": "http",
-      "url": "https://learn.microsoft.com/api/mcp?maxTokenBudget=4000"
-    },
     "astro-docs": {
       "type": "http",
       "url": "https://mcp.docs.astro.build/mcp"
@@ -33,16 +29,12 @@
     "drawio": {
       "type": "stdio",
       "command": "deno",
-      "args": [
-        "run",
-        "-P",
-        "--no-check",
-        "--cached-only",
-        "${workspaceFolder}/tools/mcp-servers/drawio/src/index.ts"
-      ]
+      "args": ["run", "-P", "--no-check", "--frozen", "${workspaceFolder}/tools/mcp-servers/drawio/src/index.ts"],
+      "env": {
+        "DENO_DIR": "${userHome}/.cache/deno"
+      }
     },
-    // Azure MCP Server — includes Microsoft Foundry tools (agents, models, knowledge indexes)
-    "azure": {
+    "azure-mcp": {
       "type": "stdio",
       "command": "npx",
       "args": ["-y", "@azure/mcp@latest", "server", "start"]
